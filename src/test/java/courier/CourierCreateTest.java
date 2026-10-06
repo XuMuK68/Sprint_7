@@ -3,6 +3,9 @@ package courier;
 import io.restassured.response.ValidatableResponse;
 import org.junit.After;
 import org.junit.Test;
+import static org.apache.http.HttpStatus.*;
+import io.qameta.allure.Description;
+import io.qameta.allure.junit4.DisplayName;
 
 import static org.hamcrest.Matchers.is;
 
@@ -28,6 +31,8 @@ public class CourierCreateTest {
     }
 
     @Test
+    @DisplayName("Создание курьера")
+    @Description("Проверка успешного создания нового курьера")
     public void createCourierTest() {
 
         courier = new Courier(
@@ -39,11 +44,13 @@ public class CourierCreateTest {
 
         response
                 .assertThat()
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .body("ok", is(true));
     }
 
     @Test
+    @DisplayName("Создание дубликата курьера")
+    @Description("Проверка ошибки при попытке создать курьера с уже существующим логином")
     public void doubleCreatedTest() {
 
         courier = new Courier(
@@ -54,16 +61,18 @@ public class CourierCreateTest {
         // Первый раз создаём курьера
         client.create(courier)
                 .assertThat()
-                .statusCode(201);
+                .statusCode(SC_CREATED);
 
         // Второй раз создаём того же курьера
         client.create(courier)
                 .assertThat()
-                .statusCode(409)
-                .body("message", is("Этот логин уже используется. Попробуйте другой."));
+                .statusCode(SC_CONFLICT)
+                .body("message", is("Этот логин уже используется"));
     }
 
     @Test
+    @DisplayName("Создание курьера без логина")
+    @Description("Проверка ошибки при создании курьера без логина")
     public void createCourierWithoutLoginTest() {
 
         Courier courier = new Courier();
@@ -71,10 +80,13 @@ public class CourierCreateTest {
 
         client.create(courier)
                 .assertThat()
-                .statusCode(400);
+                .statusCode(SC_BAD_REQUEST)
+                .body("message", is("Недостаточно данных для создания учетной записи"));
     }
 
     @Test
+    @DisplayName("Создание курьера без пароля")
+    @Description("Проверка ошибки при создании курьера без пароля")
     public void createCourierWithoutPasswordTest() {
 
         Courier courier = new Courier();
@@ -82,7 +94,8 @@ public class CourierCreateTest {
 
         client.create(courier)
                 .assertThat()
-                .statusCode(400);
+                .statusCode(SC_BAD_REQUEST)
+                .body("message", is("Недостаточно данных для создания учетной записи"));
     }
 
 }

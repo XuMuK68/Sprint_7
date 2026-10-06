@@ -1,19 +1,14 @@
 package courier;
 
+import io.qameta.allure.Step;
 import io.restassured.response.ValidatableResponse;
 
-import static io.restassured.RestAssured.given;
-
-public class CourierMethod {
-
-    private static final String BASE_URL =
-            "https://qa-scooter.praktikum-services.ru";
+public class CourierMethod extends BaseMethod {
 
     // Создание курьера
+    @Step("Создать курьера")
     public ValidatableResponse create(Courier courier) {
-        return given()
-                .baseUri(BASE_URL)
-                .header("Content-type", "application/json")
+        return spec()
                 .body(courier)
                 .when()
                 .post("/api/v1/courier")
@@ -21,10 +16,9 @@ public class CourierMethod {
     }
 
     // Авторизация курьера
+    @Step("Авторизовать курьера")
     public ValidatableResponse login(Courier courier) {
-        return given()
-                .baseUri(BASE_URL)
-                .header("Content-type", "application/json")
+        return spec()
                 .body(courier)
                 .log().all()
                 .when()
@@ -34,6 +28,7 @@ public class CourierMethod {
     }
 
     // Получение ID курьера после авторизации
+    @Step("Получить ID курьера")
     public int checkLogin(ValidatableResponse response) {
         return response
                 .extract()
@@ -41,11 +36,24 @@ public class CourierMethod {
     }
 
     // Удаление курьера
+    @Step("Удалить курьера")
     public ValidatableResponse delete(int courierId) {
-        return given()
-                .baseUri(BASE_URL)
+        return spec()
                 .when()
                 .delete("/api/v1/courier/" + courierId)
                 .then();
     }
+
+    @Step("Авторизовать курьера без пароля")
+    public ValidatableResponse loginWithoutPassword(String login) {
+
+        CourierLoginData data = new CourierLoginData(login);
+
+        return spec()
+                .body(data)
+                .when()
+                .post("/api/v1/courier/login")
+                .then();
+    }
+
 }

@@ -5,6 +5,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import static org.hamcrest.Matchers.notNullValue;
+import static org.apache.http.HttpStatus.*;
+import io.qameta.allure.Description;
+import io.qameta.allure.junit4.DisplayName;
 
 @RunWith(Parameterized.class)
 public class OrderCreateTest {
@@ -28,6 +31,8 @@ public class OrderCreateTest {
     }
 
     @Test
+    @DisplayName("Создание заказа")
+    @Description("Проверка создания заказа с разными вариантами цвета самоката")
     public void createOrderTest() {
 
         Order order = new Order(
@@ -44,7 +49,7 @@ public class OrderCreateTest {
 
         client.create(order)
                 .assertThat()
-                .statusCode(201)
+                .statusCode(SC_CREATED)
                 .body("track", notNullValue());
     }
 }

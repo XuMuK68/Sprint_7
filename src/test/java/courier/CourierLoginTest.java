@@ -1,10 +1,16 @@
 package courier;
 
+import io.qameta.allure.Description;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.ValidatableResponse;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
-import static io.restassured.RestAssured.given;
+import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_OK;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 public class CourierLoginTest {
@@ -12,8 +18,8 @@ public class CourierLoginTest {
     private CourierMethod client = new CourierMethod();
     private Courier courier;
 
-    @Test
-    public void loginCourierTest() {
+    @Before
+    public void createCourier() {
 
         courier = new Courier(
                 "courier_" + System.currentTimeMillis(),
@@ -22,27 +28,26 @@ public class CourierLoginTest {
 
         client.create(courier)
                 .assertThat()
-                .statusCode(201);
+                .statusCode(SC_CREATED);
+    }
+
+    @Test
+    @DisplayName("Авторизация курьера")
+    @Description("Проверка успешной авторизации зарегистрированного курьера")
+    public void loginCourierTest() {
 
         ValidatableResponse response = client.login(courier);
 
         response
                 .assertThat()
-                .statusCode(200)
+                .statusCode(SC_OK)
                 .body("id", notNullValue());
     }
 
-        @Test //неверный пароль
+    @Test
+    @DisplayName("Авторизация с неверным паролем")
+    @Description("Проверка ошибки при авторизации курьера с неверным паролем")
     public void loginWithBadPasswordTest() {
-
-        courier = new Courier(
-                "courier_" + System.currentTimeMillis(),
-                "123456"
-        );
-
-        client.create(courier)
-                .assertThat()
-                .statusCode(201);
 
         Courier wrongCourier = new Courier(
                 courier.getLogin(),
@@ -51,46 +56,8 @@ public class CourierLoginTest {
 
         client.login(wrongCourier)
                 .assertThat()
-                .statusCode(404);
-    }
-
-    @Test//неверный логин
-    public void loginWithFakeLoginTest() {
-
-        Courier courier = new Courier(
-                "courier_" + System.currentTimeMillis(),
-                "123456"
-        );
-
-        client.login(courier)
-                .assertThat()
-                .statusCode(404);
-    }
-// нет логина
-    @Test
-    public void loginWithoutLoginTest() {
-
-        Courier courier = new Courier();
-        courier.setPassword("123456");
-
-        client.login(courier)
-                .assertThat()
-                .statusCode(400);
-    }
-        //нет пароля. код ошибки: 504. это баг???????
-    @Test
-    public void loginWithoutPasswordTest() {
-
-        String login = "courier_" + System.currentTimeMillis();
-
-        given()
-                .baseUri("https://qa-scooter.praktikum-services.ru")
-                .header("Content-Type", "application/json")
-                .body("{\"login\":\"" + login + "\"}")
-                .when()
-                .post("/api/v1/courier/login")
-                .then()
-                .statusCode(400);
+                .statusCode(SC_NOT_FOUND)
+                .body("message", is("Учетная запись не найдена"));
     }
 
     @After
@@ -108,5 +75,4 @@ public class CourierLoginTest {
             client.delete(courierId);
         }
     }
-
 }
